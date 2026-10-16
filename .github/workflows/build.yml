@@ -37,6 +37,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.${{ github.run_number }}
-          name: FOLLYWOOD MOVIES KENYA v1.${{ github.run_number }}
+          tag_name: build-${{ github.run_number }}-${{ github.run_attempt }}
+          name: FOLLYWOOD MOVIES KENYA build ${{ github.run_number }}
           files: FOLLYWOOD-MOVIES-KENYA.apk
+          make_latest: true
