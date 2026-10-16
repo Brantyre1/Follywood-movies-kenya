@@ -382,7 +382,7 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 0.78,
+        mainAxisExtent: 220,
       ),
       itemCount: filtered.length,
       itemBuilder: (context, i) => _VideoCard(
