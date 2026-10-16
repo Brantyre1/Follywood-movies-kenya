@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -29,8 +31,12 @@ jobs:
       - name: Build APK
         run: flutter build apk --release
 
-      - name: Upload
-        uses: actions/upload-artifact@v4
+      - name: Rename APK
+        run: cp build/app/outputs/flutter-apk/app-release.apk FOLLYWOOD-MOVIES-KENYA.apk
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: follywood-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          tag_name: v1.${{ github.run_number }}
+          name: FOLLYWOOD MOVIES KENYA v1.${{ github.run_number }}
+          files: FOLLYWOOD-MOVIES-KENYA.apk
