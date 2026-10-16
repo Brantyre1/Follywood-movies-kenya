@@ -512,6 +512,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.0"
+  youtube_explode_dart_alpha:
+    dependency: "direct main"
+    description:
+      name: youtube_explode_dart_alpha
+      sha256: "8097322df4d0d04116961546e290ab6845244024233c104d6c8f60c2de9e2ccc"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.5.3"
 sdks:
-  dart: ">=3.13.5 <4.0.0"
+  dart: ">=3.11.0 <4.0.0"
   flutter: ">=3.38.4"

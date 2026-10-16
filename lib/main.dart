@@ -1,8 +1,14 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+
+const String CHANNEL_URL = 'https://www.youtube.com/@follywoodtopmovies/videos';
+const String DESKTOP_UA =
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+    '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,6 +32,7 @@ class FollywoodApp extends StatelessWidget {
   }
 }
 
+// ---------- SPLASH ----------
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
   @override
@@ -36,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 3), () {
+    Timer(const Duration(seconds: 2), () {
       if (mounted) {
         Navigator.pushReplacement(context,
             MaterialPageRoute(builder: (_) => const HomeScreen()));
@@ -90,6 +97,14 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
+// ---------- HOME ----------
+class VideoInfo {
+  final String id;
+  final String title;
+  VideoInfo(this.id, this.title);
+  String get thumbUrl => 'https://i.ytimg.com/vi/$id/mqdefault.jpg';
+}
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
   @override
@@ -97,9 +112,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final YoutubeExplode yt = YoutubeExplode();
-  List<Video> allVideos = [];
-  List<Video> filtered = [];
+  List<VideoInfo> allVideos = [];
+  List<VideoInfo> filtered = [];
   bool loading = true;
   String? error;
   final TextEditingController searchCtrl = TextEditingController();
@@ -113,12 +127,45 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadVideos() async {
     try {
-      final channel = await yt.channels.getByHandle('@follywoodtopmovies');
-      final uploads = await yt.channels.getUploads(channel.id);
-      final list = await uploads.toList();
+      // 1. Fetch channel videos page
+      final resp = await http.get(
+        Uri.parse(CHANNEL_URL),
+        headers: {'User-Agent': DESKTOP_UA},
+      ).timeout(const Duration(seconds: 30));
+
+      if (resp.statusCode != 200) {
+        throw Exception('HTTP ${resp.statusCode}');
+      }
+
+      // 2. Extract video IDs
+      final ids = RegExp(r'"videoId":"([A-Za-z0-9_-]{11})"')
+          .allMatches(resp.body)
+          .map((m) => m.group(1)!)
+          .toSet()
+          .toList();
+
+      if (ids.isEmpty) {
+        throw Exception('No videos found in channel page');
+      }
+
+      // 3. For each ID, fetch title in parallel batches
+      final videos = <VideoInfo>[];
+      const batch = 6;
+      for (int i = 0; i < ids.length; i += batch) {
+        final chunk = ids.sublist(i, i + batch > ids.length ? ids.length : i + batch);
+        final results = await Future.wait(chunk.map(_fetchTitle));
+        videos.addAll(results.whereType<VideoInfo>());
+        if (mounted) {
+          setState(() {
+            allVideos = List.from(videos);
+            filtered = allVideos;
+          });
+        }
+      }
+
       setState(() {
-        allVideos = list;
-        filtered = list;
+        allVideos = videos;
+        filtered = videos;
         loading = false;
       });
     } catch (e) {
@@ -126,6 +173,26 @@ class _HomeScreenState extends State<HomeScreen> {
         error = e.toString();
         loading = false;
       });
+    }
+  }
+
+  Future<VideoInfo?> _fetchTitle(String id) async {
+    try {
+      final r = await http.get(
+        Uri.parse('https://www.youtube.com/watch?v=$id'),
+        headers: {'User-Agent': DESKTOP_UA},
+      ).timeout(const Duration(seconds: 15));
+
+      final m = RegExp(r'<meta name="title" content="([^"]*)"')
+          .firstMatch(r.body);
+      final raw = m?.group(1) ?? id;
+
+      // Clean title: strip "| YouTube" suffix and HTML entities
+      var title = raw.replaceAll(' - YouTube', '').replaceAll('| YouTube', '');
+      title = title.replaceAll('&amp;', '&').replaceAll('&quot;', '"').replaceAll('&#39;', "'");
+      return VideoInfo(id, title.trim());
+    } catch (_) {
+      return VideoInfo(id, id);
     }
   }
 
@@ -146,6 +213,20 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(fontSize: 15, letterSpacing: 2)),
         backgroundColor: const Color(0xFF0B0B12),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Color(0xFFFFA500)),
+            onPressed: () {
+              setState(() {
+                loading = true;
+                error = null;
+                allVideos = [];
+                filtered = [];
+              });
+              _loadVideos();
+            },
+          ),
+        ],
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -178,20 +259,51 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: loading
                   ? const Center(
-                      child:
-                          CircularProgressIndicator(color: Color(0xFFFFA500)))
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(color: Color(0xFFFFA500)),
+                          SizedBox(height: 16),
+                          Text('Loading movies from channel...',
+                              style: TextStyle(color: Colors.white70)),
+                        ],
+                      ),
+                    )
                   : error != null
                       ? Center(
                           child: Padding(
                             padding: const EdgeInsets.all(20),
-                            child: Text('Error loading channel:\n$error',
-                                style: const TextStyle(
-                                    color: Colors.red, fontSize: 12)),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.error_outline,
+                                    color: Colors.red, size: 48),
+                                const SizedBox(height: 12),
+                                Text('Error:\n$error',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                        color: Colors.red, fontSize: 12)),
+                                const SizedBox(height: 20),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFFFFA500)),
+                                  onPressed: () {
+                                    setState(() {
+                                      loading = true;
+                                      error = null;
+                                    });
+                                    _loadVideos();
+                                  },
+                                  child: const Text('Retry',
+                                      style: TextStyle(color: Colors.black)),
+                                ),
+                              ],
+                            ),
                           ),
                         )
                       : filtered.isEmpty
                           ? const Center(
-                              child: Text('No results.',
+                              child: Text('No videos found.',
                                   style: TextStyle(color: Colors.white54)))
                           : ListView.builder(
                               padding:
@@ -204,21 +316,30 @@ class _HomeScreenState extends State<HomeScreen> {
                                   margin:
                                       const EdgeInsets.symmetric(vertical: 6),
                                   child: ListTile(
-                                    leading: Image.network(
-                                      v.thumbnails.mediumResUrl,
-                                      width: 80,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => const Icon(
-                                          Icons.movie,
-                                          color: Color(0xFFFFA500)),
+                                    leading: ClipRRect(
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: Image.network(
+                                        v.thumbUrl,
+                                        width: 90,
+                                        height: 60,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) =>
+                                            Container(
+                                          width: 90,
+                                          height: 60,
+                                          color: Colors.black26,
+                                          child: const Icon(Icons.movie,
+                                              color: Color(0xFFFFA500)),
+                                        ),
+                                      ),
                                     ),
                                     title: Text(v.title,
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(
                                             fontSize: 13, color: Colors.white)),
-                                    subtitle: Text(v.author,
-                                        style: const TextStyle(
+                                    subtitle: const Text('FOLLYWOOD PRODUCTION',
+                                        style: TextStyle(
                                             color: Color(0xFFFFA500),
                                             fontSize: 11)),
                                     trailing: const Icon(Icons.download,
@@ -229,7 +350,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                           MaterialPageRoute(
                                               builder: (_) =>
                                                   DownloadTerminalScreen(
-                                                      video: v)));
+                                                      videoId: v.id,
+                                                      title: v.title)));
                                     },
                                   ),
                                 );
@@ -256,14 +378,16 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     searchCtrl.dispose();
-    yt.close();
     super.dispose();
   }
 }
 
+// ---------- TERMINAL ----------
 class DownloadTerminalScreen extends StatefulWidget {
-  final Video video;
-  const DownloadTerminalScreen({super.key, required this.video});
+  final String videoId;
+  final String title;
+  const DownloadTerminalScreen(
+      {super.key, required this.videoId, required this.title});
   @override
   State<DownloadTerminalScreen> createState() => _DownloadTerminalScreenState();
 }
@@ -274,9 +398,7 @@ class _DownloadTerminalScreenState extends State<DownloadTerminalScreen> {
   bool done = false;
 
   void log(String msg) {
-    setState(() {
-      lines.add('> $msg');
-    });
+    setState(() => lines.add('> $msg'));
   }
 
   @override
@@ -288,31 +410,31 @@ class _DownloadTerminalScreenState extends State<DownloadTerminalScreen> {
   Future<void> _download() async {
     final yt = YoutubeExplode();
     try {
-      log('Initializing download...');
-      log('Title: ${widget.video.title}');
-      log('Author: ${widget.video.author}');
-      log('Fetching manifest...');
+      log('Initializing...');
+      log('Title: ${widget.title}');
+      log('Video ID: ${widget.videoId}');
+      log('Fetching stream manifest...');
 
-      final manifest =
-          await yt.videos.streams.getManifest(widget.video.id.value);
-      final streamInfo = manifest.muxed.withHighestBitrate();
-      final stream = yt.videos.streams.get(streamInfo);
+      final manifest = await yt.videos.streams.getManifest(widget.videoId);
+      final info = manifest.muxed.withHighestBitrate();
+      final stream = yt.videos.streams.get(info);
 
-      log('Stream: ${streamInfo.qualityLabel} | ${streamInfo.container.name}');
-      log('Size: ${(streamInfo.size.totalBytes / 1024 / 1024).toStringAsFixed(1)} MB');
-      log('Saving to app storage...');
+      log('Quality: ${info.qualityLabel}');
+      log('Container: ${info.container.name}');
+      log('Size: ${(info.size.totalBytes / 1024 / 1024).toStringAsFixed(1)} MB');
+      log('Starting download...');
 
       final dir = await getApplicationDocumentsDirectory();
-      final safe = widget.video.title
+      final safe = widget.title
           .replaceAll(RegExp(r'[^\w\s-]'), '')
           .trim()
           .replaceAll(RegExp(r'\s+'), '_');
-      final filename = '${safe}_${widget.video.id.value}.mp4';
+      final filename = '${safe}_${widget.videoId}.mp4';
       final file = File('${dir.path}/$filename');
 
       final sink = file.openWrite();
       int downloaded = 0;
-      final total = streamInfo.size.totalBytes;
+      final total = info.size.totalBytes;
 
       await for (final chunk in stream) {
         sink.add(chunk);
@@ -323,9 +445,9 @@ class _DownloadTerminalScreenState extends State<DownloadTerminalScreen> {
           log('Progress: ${(pct * 100).toStringAsFixed(1)}%');
         }
       }
-
       await sink.close();
-      log('Download complete.');
+
+      log('Download complete!');
       log('Saved: $filename');
       setState(() => done = true);
     } catch (e) {
@@ -407,6 +529,7 @@ class _DownloadTerminalScreenState extends State<DownloadTerminalScreen> {
   }
 }
 
+// ---------- DOWNLOADS ----------
 class DownloadsScreen extends StatefulWidget {
   const DownloadsScreen({super.key});
   @override
