@@ -1,3 +1,5 @@
+
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -587,8 +589,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
       ..setNavigationDelegate(NavigationDelegate(
         onPageFinished: (_) => setState(() => _loading = false),
       ))
-      ..loadRequest(Uri.parse(
-          'https://www.youtube.com/embed/${widget.videoId}?autoplay=1&playsinline=1'));
+      ..loadHtmlString('''
+          <html>
+            <head><meta name="referrer" content="strict-origin-when-cross-origin"></head>
+            <body style="margin:0;padding:0;">
+              <iframe width="100%" height="100%" src="https://www.youtube.com/embed/${widget.videoId}?autoplay=1&playsinline=1" frameborder="0" allowfullscreen></iframe>
+            </body>
+          </html>
+        ''', baseUrl: Uri.parse('https://www.youtube.com'));
   }
 
   @override
