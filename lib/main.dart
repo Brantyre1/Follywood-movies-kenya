@@ -36,8 +36,8 @@ class FollywoodApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.white,
         primaryColor: kOrange,
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
-          foregroundColor: kTextDark,
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.white,
           elevation: 0,
         ),
       ),
@@ -67,7 +67,8 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.black,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -257,7 +258,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.black,
       appBar: AppBar(
         title: const Text('FOLLYWOOD MOVIES KENYA',
             style: TextStyle(
@@ -294,19 +296,27 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/bg.jpg'),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(Colors.black45, BlendMode.darken),
+          ),
+        ),
+        child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
             child: TextField(
               controller: searchCtrl,
-              style: const TextStyle(color: kTextDark),
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: 'Search movies...',
-                hintStyle: const TextStyle(color: kTextGrey),
-                prefixIcon: const Icon(Icons.search, color: kTextGrey),
+                hintStyle: const TextStyle(color: Colors.white70),
+                prefixIcon: const Icon(Icons.search, color: Colors.white70),
                 filled: true,
-                fillColor: const Color(0xFFF2F2F2),
+                fillColor: Colors.black.withOpacity(0.6),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
                     borderSide: BorderSide.none),
@@ -317,6 +327,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const Divider(height: 1),
           Expanded(child: _buildBody()),
         ],
+      ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
@@ -428,7 +439,7 @@ class _VideoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.black.withOpacity(0.6),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -497,7 +508,7 @@ class _VideoCard extends StatelessWidget {
                 style: const TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: kTextDark,
+                    color: Colors.white,
                     height: 1.25),
               ),
             ),
@@ -518,7 +529,7 @@ class _VideoCard extends StatelessWidget {
                   child: _MiniBtn(
                       icon: Icons.download,
                       label: 'Save',
-                      color: kTextDark,
+                      color: Colors.white,
                       onTap: onDownload),
                 ),
               ],
@@ -543,7 +554,7 @@ class _MiniBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFFF2F2F2),
+      color: Colors.white.withOpacity(0.15),
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: onTap,
@@ -624,7 +635,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/bg.jpg'),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(Colors.black45, BlendMode.darken),
+          ),
+        ),
+        child: Column(
         children: [
           AspectRatio(
             aspectRatio: 16 / 9,
@@ -809,7 +828,8 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.black,
       appBar: AppBar(
         title: const Text('MY DOWNLOADS',
             style: TextStyle(
