@@ -39,6 +39,7 @@ dependencies:
   http: ^1.6.0
   youtube_explode_dart_alpha: ^2.5.3
   webview_flutter: ^4.14.1
+  ota_update: ^7.1.0
 
 dev_dependencies:
   flutter_test:

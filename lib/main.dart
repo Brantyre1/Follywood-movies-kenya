@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+import 'updater.dart';
 
 const String CHANNEL_URL = 'https://www.youtube.com/@follywoodtopmovies/videos';
 const String DESKTOP_UA =
@@ -273,6 +274,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     strokeWidth: 2, color: kOrange),
               ),
             ),
+          IconButton(
+            icon: const Icon(Icons.system_update, color: kOrange),
+            onPressed: () => AppUpdater.checkForUpdate(context),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh, color: kOrange),
             onPressed: () {
