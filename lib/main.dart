@@ -198,7 +198,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     super.initState();
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..loadHtmlString('<html><body style="margin:0;padding:0;background:black;"><iframe width="100%" height="100%" src="https://www.youtube-nocookie.com/embed/${widget.videoId}?autoplay=1&playsinline=1&origin=https://www.youtube-nocookie.com" frameborder="0" allowfullscreen></iframe></body></html>', baseUrl: 'https://www.youtube-nocookie.com');
+      ..loadRequest(Uri.parse('https://www.youtube-nocookie.com/embed/${widget.videoId}?autoplay=1&playsinline=1'), headers: {'Referer': 'https://com.follywood.follywood_movies_kenya', 'Referrer-Policy': 'strict-origin-when-cross-origin'});
   }
   @override
   Widget build(BuildContext context) {
