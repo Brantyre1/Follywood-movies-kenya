@@ -596,7 +596,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
               <iframe width="100%" height="100%" src="https://www.youtube.com/embed/${widget.videoId}?autoplay=1&playsinline=1" frameborder="0" allowfullscreen></iframe>
             </body>
           </html>
-        ''', baseUrl: Uri.parse('https://www.youtube.com'));
+        ''', baseUrl: 'https://www.youtube.com');
   }
 
   @override
