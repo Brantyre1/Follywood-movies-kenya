@@ -43,7 +43,7 @@ class AppUpdater {
     );
 
     try {
-      OtaUpdate().execute(url).listen(
+      OtaUpdate().execute(url, destinationFilename: 'update.apk').listen(
         (OtaEvent event) {
           if (event.status == OtaStatus.INSTALLING) {
             Navigator.pop(context);
