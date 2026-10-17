@@ -227,7 +227,7 @@ class _DownloadTerminalScreenState extends State<DownloadTerminalScreen> {
     final yt = YoutubeExplode();
     try {
       final manifest = await yt.videos.streams.getManifest(widget.videoId);
-      final info = manifest.videoWithAudioOnly.firstWhere((s) => s.qualityLabel == '720p', orElse: () => manifest.muxed.withHighestBitrate());
+      final info = manifest.muxed.withHighestBitrate();
       final dir = await getApplicationDocumentsDirectory();
       final file = File('${dir.path}/${widget.title.replaceAll(" ", "_")}.mp4');
       final sink = file.openWrite();
