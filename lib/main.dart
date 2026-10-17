@@ -593,10 +593,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
           <html>
             <head><meta name="referrer" content="strict-origin-when-cross-origin"></head>
             <body style="margin:0;padding:0;">
-              <iframe width="100%" height="100%" src="https://www.youtube.com/embed/${widget.videoId}?autoplay=1&playsinline=1" frameborder="0" allowfullscreen></iframe>
+              <iframe width="100%" height="100%" src="https://www.youtube-nocookie.com/embed/${widget.videoId}?autoplay=1&playsinline=1&origin=https://www.youtube-nocookie.com" frameborder="0" allowfullscreen></iframe>
             </body>
           </html>
-        ''', baseUrl: 'https://www.youtube.com');
+        ''', baseUrl: 'https://www.youtube-nocookie.com');
   }
 
   @override
