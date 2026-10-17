@@ -256,8 +256,84 @@ class _DownloadTerminalScreenState extends State<DownloadTerminalScreen> {
     );
   }
 }
-class DownloadsScreen extends StatelessWidget {
+class DownloadsScreen extends StatefulWidget {
   const DownloadsScreen({super.key});
   @override
-  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('Downloads')));
+  State<DownloadsScreen> createState() => _DownloadsScreenState();
+}
+
+class _DownloadsScreenState extends State<DownloadsScreen> {
+  List<FileSystemEntity> files = [];
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final dir = await getApplicationDocumentsDirectory();
+    final d = Directory(dir.path);
+    final list = d.listSync().where((f) => f.path.endsWith('.mp4')).toList();
+    setState(() => files = list);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        title: const Text('MY DOWNLOADS', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white, letterSpacing: 2)),
+        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: files.isEmpty
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.download_outlined, size: 56, color: Colors.white54),
+                  SizedBox(height: 12),
+                  Text('No downloads yet.', style: TextStyle(color: Colors.white70, fontSize: 15)),
+                  SizedBox(height: 6),
+                  Text('Tap "Save" on any movie to download it.', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                ],
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: files.length,
+                itemBuilder: (_, i) {
+                  final f = files[i];
+                  final name = f.path.split('/').last;
+                  final size = (File(f.path).lengthSync() / 1024 / 1024).toStringAsFixed(1);
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(color: kOrange.withOpacity(0.2), shape: BoxShape.circle),
+                        child: const Icon(Icons.movie, color: kOrange),
+                      ),
+                      title: Text(name, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600), maxLines: 2, overflow: TextOverflow.ellipsis),
+                      subtitle: Text('$size MB', style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                        onPressed: () {
+                          File(f.path).deleteSync();
+                          _load();
+                        },
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+    );
+  }
 }
