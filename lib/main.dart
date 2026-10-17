@@ -255,17 +255,20 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  @override
+    @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: Colors.black,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.white,
+        elevation: 0,
         title: const Text('FOLLYWOOD MOVIES KENYA',
             style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: kTextDark,
+                color: Colors.white,
                 letterSpacing: 1.5)),
         actions: [
           if (pendingTitles > 0)
@@ -305,29 +308,29 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-            child: TextField(
-              controller: searchCtrl,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Search movies...',
-                hintStyle: const TextStyle(color: Colors.white70),
-                prefixIcon: const Icon(Icons.search, color: Colors.white70),
-                filled: true,
-                fillColor: Colors.black.withOpacity(0.6),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: BorderSide.none),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+              child: TextField(
+                controller: searchCtrl,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Search movies...',
+                  hintStyle: const TextStyle(color: Colors.white70),
+                  prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                  filled: true,
+                  fillColor: Colors.black.withOpacity(0.6),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                ),
               ),
             ),
-          ),
-          const Divider(height: 1),
-          Expanded(child: _buildBody()),
-        ],
-      ),
+            const Divider(height: 1, color: Colors.white24),
+            Expanded(child: _buildBody()),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
