@@ -99,6 +99,41 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: Drawer(
+        child: Container(
+          color: Colors.black,
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              const DrawerHeader(
+                decoration: BoxDecoration(color: kOrange),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Icon(Icons.movie_filter, color: Colors.white, size: 40),
+                    SizedBox(height: 10),
+                    Text('FOLLYWOOD', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.home, color: Colors.white),
+                title: const Text('Home', style: TextStyle(color: Colors.white)),
+                onTap: () => Navigator.pop(context),
+              ),
+              ListTile(
+                leading: const Icon(Icons.download_done, color: kOrange),
+                title: const Text('My Downloads', style: TextStyle(color: kOrange)),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const DownloadsScreen()));
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
       extendBodyBehindAppBar: true,
       backgroundColor: Colors.black,
       appBar: AppBar(
