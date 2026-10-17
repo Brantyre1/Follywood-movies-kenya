@@ -29,8 +29,6 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
   flutter:
-  assets:
-    - assets/images/bg.jpg
     sdk: flutter
 
   # The following adds the Cupertino Icons font to your application.
@@ -41,8 +39,6 @@ dependencies:
   http: ^1.6.0
   youtube_explode_dart_alpha: ^2.5.3
   webview_flutter: ^4.14.1
-  assets:
-    - assets/images/bg.jpg
   ota_update: ^7.1.0
 
 dev_dependencies:
@@ -61,13 +57,13 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-  assets:
-    - assets/images/bg.jpg
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  assets:
+    - assets/images/bg.jpg
 
   # To add assets to your application, add an assets section, like this:
   # assets:
