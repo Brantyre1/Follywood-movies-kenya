@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:video_player/video_player.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'updater.dart';
 
@@ -322,6 +323,9 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                       ),
                       title: Text(name, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600), maxLines: 2, overflow: TextOverflow.ellipsis),
                       subtitle: Text('$size MB', style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => LocalPlayerScreen(filePath: f.path)));
+                      },
                       trailing: IconButton(
                         icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                         onPressed: () {
@@ -334,6 +338,65 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                 },
               ),
             ),
+    );
+  }
+}
+
+
+class LocalPlayerScreen extends StatefulWidget {
+  final String filePath;
+  const LocalPlayerScreen({super.key, required this.filePath});
+  @override
+  State<LocalPlayerScreen> createState() => _LocalPlayerScreenState();
+}
+
+class _LocalPlayerScreenState extends State<LocalPlayerScreen> {
+  late VideoPlayerController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.file(File(widget.filePath))
+      ..initialize().then((_) {
+        setState(() {});
+        _controller.play();
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(backgroundColor: Colors.black, iconTheme: const IconThemeData(color: Colors.white), title: const Text('PLAYING', style: TextStyle(color: Colors.white, fontSize: 14))),
+      body: Center(
+        child: _controller.value.isInitialized
+            ? AspectRatio(
+                aspectRatio: _controller.value.aspectRatio,
+                child: Stack(
+                  alignment: Alignment.bottomCenter,
+                  children: [
+                    VideoPlayer(_controller),
+                    VideoProgressIndicator(_controller, allowScrubbing: true),
+                    FloatingActionButton(
+                      onPressed: () {
+                        setState(() {
+                          _controller.value.isPlaying ? _controller.pause() : _controller.play();
+                        });
+                      },
+                      backgroundColor: Colors.transparent,
+                      child: Icon(_controller.value.isPlaying ? Icons.pause : Icons.play_arrow, color: Colors.white, size: 50),
+                    ),
+                  ],
+                ),
+              )
+            : const CircularProgressIndicator(color: kOrange),
+      ),
     );
   }
 }
