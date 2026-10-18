@@ -172,33 +172,33 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadAll() async {
-    final yt = YoutubeExplode();
+    const String apiKey = 'AIzaSyCn_yGtVtDFd-C7D-eJHGCE1qdY19gxDK8';
+    const String uploadsPlaylistId = 'UUdgwWRbltiP3rbwxqL555UA'; 
+    
     try {
-      // Your Channel ID (found earlier)
-      const String channelId = 'UCdgwWRbltiP3rbwxqL555UA';
+      final url = Uri.parse('https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=$uploadsPlaylistId&key=$apiKey');
+      final resp = await http.get(url).timeout(const Duration(seconds: 15));
       
-      // Get the channel's uploads playlist (this contains ALL videos)
-      final channel = await yt.channels.get(channelId);
-      final uploadsPlaylistId = channel.id.value.replaceFirst("UC", "UU");
-
-      // Fetch ALL videos from the uploads playlist
-      final videos = await yt.playlists.getVideos(uploadsPlaylistId).toList();
+      if (resp.statusCode != 200) throw Exception('API Error: ${resp.statusCode}');
+      
+      final data = jsonDecode(resp.body);
+      final items = data['items'] as List;
       
       final List<VideoItem> loadedVideos = [];
-      for (var video in videos) {
-        loadedVideos.add(VideoItem(id: video.id.value, title: video.title));
+      for (var item in items) {
+        final id = item['snippet']['resourceId']['videoId'];
+        final title = item['snippet']['title'];
+        loadedVideos.add(VideoItem(id: id, title: title));
       }
-
+      
       setState(() {
         allVideos = loadedVideos;
         filtered = allVideos;
         loading = false;
         pendingTitles = 0;
       });
-    } catch (e) {
-      setState(() => loading = false);
-    } finally {
-      yt.close();
+    } catch (e) { 
+      setState(() => loading = false); 
     }
   }
 
