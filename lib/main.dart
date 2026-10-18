@@ -79,88 +79,36 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadAll() async {
-    const String apiKey = 'YOUR_API_KEY_HERE';
-    const String uploadsPlaylistId = 'UUdgwWRbltiP3rbwxqL555UA'; 
-    
+    final yt = YoutubeExplode();
     try {
-      final url = Uri.parse('https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=$uploadsPlaylistId&key=$apiKey');
-      final resp = await http.get(url).timeout(const Duration(seconds: 15));
+      // Your Channel ID (found earlier)
+      const String channelId = 'UCdgwWRbltiP3rbwxqL555UA';
       
-      if (resp.statusCode != 200) throw Exception('API Error: ${resp.statusCode}');
-      
-      final data = jsonDecode(resp.body);
-      final items = data['items'] as List;
+      // Get the channel's uploads playlist (this contains ALL videos)
+      final channel = await yt.channels.get(channelId);
+      final uploadsPlaylistId = channel.uploadsPlaylistId;
+
+      // Fetch ALL videos from the uploads playlist
+      final videos = await yt.playlists.getVideos(uploadsPlaylistId).toList();
       
       final List<VideoItem> loadedVideos = [];
-      for (var item in items) {
-        final id = item['snippet']['resourceId']['videoId'];
-        final title = item['snippet']['title'];
-        loadedVideos.add(VideoItem(id: id, title: title));
+      for (var video in videos) {
+        loadedVideos.add(VideoItem(id: video.id.value, title: video.title));
       }
-      
+
       setState(() {
         allVideos = loadedVideos;
         filtered = allVideos;
         loading = false;
         pendingTitles = 0;
       });
-    } catch (e) { 
-      setState(() => loading = false); 
+    } catch (e) {
+      setState(() => loading = false);
+    } finally {
+      yt.close();
     }
   }
-          color: const Color(0xFF16161A),
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              const DrawerHeader(decoration: BoxDecoration(color: kOrange), child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.end, children: [Icon(Icons.movie_filter, color: Colors.white, size: 40), SizedBox(height: 10), Text('FOLLYWOOD', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))])),
-              ListTile(leading: const Icon(Icons.home, color: Colors.white), title: const Text('Home', style: TextStyle(color: Colors.white)), onTap: () => Navigator.pop(context)),
-              ListTile(leading: const Icon(Icons.download_done, color: kOrange), title: const Text('My Downloads', style: TextStyle(color: kOrange)), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const DownloadsScreen())); }),
-            ],
-          ),
-        ),
-      ),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0F0F13),
-        elevation: 0,
-        title: const Text('FOLLYWOOD MOVIES KENYA', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white, letterSpacing: 1.2)),
-        actions: [
-          if (pendingTitles > 0) const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: kOrange))),
-          IconButton(icon: const Icon(Icons.system_update, color: kOrange), onPressed: () => AppUpdater.checkForUpdate(context)),
-          IconButton(icon: const Icon(Icons.refresh, color: kOrange), onPressed: () { setState(() { loading = true; }); _loadAll(); }),
-        ],
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            child: TextField(controller: searchCtrl, style: const TextStyle(color: Colors.white), decoration: InputDecoration(hintText: 'Search movies...', hintStyle: const TextStyle(color: Colors.white54), prefixIcon: const Icon(Icons.search, color: Colors.white54), filled: true, fillColor: const Color(0xFF1C1C22), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none), contentPadding: const EdgeInsets.symmetric(vertical: 0))),
-          ),
-          Expanded(
-            child: loading ? const Center(child: CircularProgressIndicator(color: kOrange)) : GridView.builder(
-              padding: const EdgeInsets.all(12),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, mainAxisExtent: 220),
-              itemCount: filtered.length,
-              itemBuilder: (context, i) => Container(
-                decoration: BoxDecoration(color: const Color(0xFF1C1C22), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white12)),
-                child: Column(
-                  children: [
-                    Expanded(child: ClipRRect(borderRadius: const BorderRadius.vertical(top: Radius.circular(12)), child: Image.network(filtered[i].thumbUrl, fit: BoxFit.cover, width: double.infinity))),
-                    Padding(padding: const EdgeInsets.all(8), child: Text(filtered[i].title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 12))),
-                    Row(
-                      children: [
-                        Expanded(child: TextButton.icon(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerScreen(videoId: filtered[i].id, title: filtered[i].title))), icon: const Icon(Icons.play_arrow, color: kOrange, size: 16), label: const Text('Watch', style: TextStyle(color: kOrange, fontSize: 10)))),
-                        Expanded(child: TextButton.icon(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DownloadTerminalScreen(videoId: filtered[i].id, title: filtered[i].title))), icon: const Icon(Icons.download, color: Colors.white, size: 16), label: const Text('Save', style: TextStyle(color: Colors.white, fontSize: 10)))),
-                      ],
-                    )
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 }
 class PlayerScreen extends StatefulWidget {
   final String videoId;
