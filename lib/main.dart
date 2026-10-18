@@ -1,3 +1,4 @@
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -206,7 +207,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title, style: const TextStyle(fontSize: 14))),
+      appBar: AppBar(title: Text(widget.title, style: const TextStyle(fontSize: 14)), actions: [IconButton(icon: const Icon(Icons.open_in_new, color: kOrange), onPressed: () async { final url = Uri.parse("https://www.youtube.com/watch?v=${widget.videoId}"); if (await canLaunchUrl(url)) { await launchUrl(url, mode: LaunchMode.externalApplication); } })]),
       body: AspectRatio(aspectRatio: 16 / 9, child: WebViewWidget(controller: _controller)),
     );
   }
