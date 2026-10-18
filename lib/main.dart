@@ -75,6 +75,31 @@ class _HomeScreenState extends State<HomeScreen> {
       final q = searchCtrl.text.toLowerCase();
       setState(() => filtered = q.isEmpty ? allVideos : allVideos.where((v) => v.title.toLowerCase().contains(q)).toList());
     });
+
+  Widget _buildBody() {
+    if (loading && allVideos.isEmpty) {
+      return const Center(child: CircularProgressIndicator(color: kOrange));
+    }
+    if (filtered.isEmpty) {
+      return const Center(child: Text('No videos found.', style: TextStyle(color: Colors.white70, fontSize: 15)));
+    }
+    return GridView.builder(
+      padding: const EdgeInsets.all(12),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        mainAxisExtent: 220,
+      ),
+      itemCount: filtered.length,
+      itemBuilder: (context, i) => _VideoCard(
+        item: filtered[i],
+        onWatch: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerScreen(videoId: filtered[i].id, title: filtered[i].title))),
+        onDownload: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DownloadTerminalScreen(videoId: filtered[i].id, title: filtered[i].title))),
+      ),
+    );
+  }
+
   }
 
   Future<void> _loadAll() async {
