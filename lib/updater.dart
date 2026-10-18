@@ -55,7 +55,7 @@ class AppUpdater {
           } else if (event.status == OtaStatus.FAILED) {
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Update failed: ${event.message}')),
+              SnackBar(content: Text('Update failed: ${event.value}')),
             );
           }
         },
