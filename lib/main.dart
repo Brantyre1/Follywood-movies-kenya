@@ -79,32 +79,35 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadAll() async {
+    const String apiKey = 'YOUR_API_KEY_HERE';
+    const String uploadsPlaylistId = 'UUdgwWRbltiP3rbwxqL555UA'; 
+    
     try {
-      final resp = await http.get(Uri.parse(CHANNEL_URL), headers: {'User-Agent': DESKTOP_UA}).timeout(const Duration(seconds: 12));
-      final ids = RegExp(r'"videoId":"([A-Za-z0-9_-]{11})"').allMatches(resp.body).map((m) => m.group(1)!).toSet().toList();
+      final url = Uri.parse('https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=$uploadsPlaylistId&key=$apiKey');
+      final resp = await http.get(url).timeout(const Duration(seconds: 15));
+      
+      if (resp.statusCode != 200) throw Exception('API Error: ${resp.statusCode}');
+      
+      final data = jsonDecode(resp.body);
+      final items = data['items'] as List;
+      
+      final List<VideoItem> loadedVideos = [];
+      for (var item in items) {
+        final id = item['snippet']['resourceId']['videoId'];
+        final title = item['snippet']['title'];
+        loadedVideos.add(VideoItem(id: id, title: title));
+      }
+      
       setState(() {
-        allVideos = ids.map((id) => VideoItem(id: id, title: ' ')).toList();
+        allVideos = loadedVideos;
         filtered = allVideos;
         loading = false;
-        pendingTitles = ids.length;
+        pendingTitles = 0;
       });
-      for (var id in ids) {
-        final r = await http.get(Uri.parse('https://www.youtube.com/watch?v=$id'), headers: {'User-Agent': DESKTOP_UA});
-        final m = RegExp(r'<meta name="title" content="([^"]*)"').firstMatch(r.body);
-        if (m != null) {
-          var t = m.group(1)!.replaceAll(' - YouTube', '').replaceAll('&amp;', '&');
-          final idx = allVideos.indexWhere((v) => v.id == id);
-          if (idx >= 0 && mounted) setState(() { allVideos[idx].title = t; filtered = List.from(allVideos); pendingTitles--; });
-        }
-      }
-    } catch (e) { setState(() => loading = false); }
+    } catch (e) { 
+      setState(() => loading = false); 
+    }
   }
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F0F13),
-      drawer: Drawer(
-        child: Container(
           color: const Color(0xFF16161A),
           child: ListView(
             padding: EdgeInsets.zero,
