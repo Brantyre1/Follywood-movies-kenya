@@ -46,18 +46,18 @@ class AppUpdater {
     );
 
     try {
-      // 'update.apk' is the temporary filename it saves to before installing
       OtaUpdate().execute(url, destinationFilename: 'update.apk').listen(
         (OtaEvent event) {
           if (event.status == OtaStatus.INSTALLING) {
             // App is launching the Android installer, close the dialog
             Navigator.pop(context);
-          } else if (event.status == OtaStatus.FAILED) {
-            Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Update failed: ${event.value}')),
-            );
           }
+        },
+        onError: (error) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Update failed: $error')),
+          );
         },
       );
     } catch (e) {
