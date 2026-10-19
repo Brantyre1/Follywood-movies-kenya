@@ -113,6 +113,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const DownloadsScreen()));
                 },
               ),
+              ListTile(
+                leading: const Icon(Icons.link, color: Colors.white),
+                title: const Text('Download from Link', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const LinkDownloadScreen()));
+                },
+              ),
             ],
           ),
         ),
@@ -311,5 +319,111 @@ class _LocalPlayerScreenState extends State<LocalPlayerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(backgroundColor: Colors.black, appBar: AppBar(backgroundColor: Colors.black, iconTheme: const IconThemeData(color: Colors.white), title: const Text('PLAYING', style: TextStyle(color: Colors.white, fontSize: 14))), body: Center(child: _controller.value.isInitialized ? AspectRatio(aspectRatio: _controller.value.aspectRatio, child: Stack(alignment: Alignment.bottomCenter, children: [VideoPlayer(_controller), VideoProgressIndicator(_controller, allowScrubbing: true), FloatingActionButton(backgroundColor: Colors.transparent, onPressed: () { setState(() { _controller.value.isPlaying ? _controller.pause() : _controller.play(); }); }, child: Icon(_controller.value.isPlaying ? Icons.pause : Icons.play_arrow, color: Colors.white, size: 50))])) : const CircularProgressIndicator(color: kOrange)));
+  }
+}
+
+class LinkDownloadScreen extends StatefulWidget {
+  const LinkDownloadScreen({super.key});
+  @override
+  State<LinkDownloadScreen> createState() => _LinkDownloadScreenState();
+}
+
+class _LinkDownloadScreenState extends State<LinkDownloadScreen> {
+  final TextEditingController _linkCtrl = TextEditingController();
+  bool _loading = false;
+
+  Future<void> _processLink() async {
+    final url = _linkCtrl.text.trim();
+    if (url.isEmpty) return;
+
+    setState(() => _loading = true);
+
+    final youtubeRegex = RegExp(r'(youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})');
+    final match = youtubeRegex.firstMatch(url);
+
+    if (match != null) {
+      final videoId = match.group(2)!;
+      setState(() => _loading = false);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DownloadTerminalScreen(videoId: videoId, title: 'YouTube Video'),
+        ),
+      );
+    } else {
+      setState(() => _loading = false);
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: const Color(0xFF1C1C22),
+          title: const Text('External Link', style: TextStyle(color: Colors.white)),
+          content: const Text(
+            'For Facebook, Instagram, or TikTok, the app will open the link in your browser. You can then use your phone\'s screen recorder or the platform\'s save feature.',
+            style: TextStyle(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('CANCEL', style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                if (await canLaunchUrl(Uri.parse(url))) {
+                  await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                }
+              },
+              child: const Text('OPEN LINK', style: TextStyle(color: kOrange)),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0F0F13),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF0F0F13),
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text('DOWNLOAD FROM LINK', style: TextStyle(fontSize: 16, color: Colors.white)),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _linkCtrl,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: 'Paste YouTube, Facebook, TikTok link...',
+                hintStyle: const TextStyle(color: Colors.white54),
+                prefixIcon: const Icon(Icons.link, color: Colors.white54),
+                filled: true,
+                fillColor: const Color(0xFF1C1C22),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kOrange,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: _loading ? null : _processLink,
+                child: _loading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('DOWNLOAD', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
