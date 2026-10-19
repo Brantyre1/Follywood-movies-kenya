@@ -10,6 +10,7 @@ import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 import 'updater.dart';
+import 'secrets.dart';
 
 const String CHANNEL_URL = 'https://www.youtube.com/@follywoodtopmovies/videos';
 const String DESKTOP_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)';
@@ -180,25 +181,32 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadAll() async {
-    const String apiKey = 'AIzaSyCn_yGtVtDFd-C7D-eJHGCE1qdY19gxDK8';
+    const String apiKey = youtubeApiKey;
     const String uploadsPlaylistId = 'UUdgwWRbltiP3rbwxqL555UA'; 
-    
+    String nextPageToken = '';
+    List<VideoItem> loadedVideos = [];
+
     try {
-      final url = Uri.parse('https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=$uploadsPlaylistId&key=$apiKey');
-      final resp = await http.get(url).timeout(const Duration(seconds: 15));
-      
-      if (resp.statusCode != 200) throw Exception('API Error: ${resp.statusCode}');
-      
-      final data = jsonDecode(resp.body);
-      final items = data['items'] as List;
-      
-      final List<VideoItem> loadedVideos = [];
-      for (var item in items) {
-        final id = item['snippet']['resourceId']['videoId'];
-        final title = item['snippet']['title'];
-        loadedVideos.add(VideoItem(id: id, title: title));
-      }
-      
+      do {
+        final urlString = 'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=$uploadsPlaylistId&key=$apiKey' + (nextPageToken.isNotEmpty ? '&pageToken=$nextPageToken' : '');
+        final url = Uri.parse(urlString);
+        final resp = await http.get(url).timeout(const Duration(seconds: 15));
+        
+        if (resp.statusCode != 200) throw Exception('API Error: ${resp.statusCode}');
+        
+        final data = jsonDecode(resp.body);
+        final items = data['items'] as List;
+        
+        for (var item in items) {
+          final id = item['snippet']['resourceId']['videoId'];
+          final title = item['snippet']['title'];
+          loadedVideos.add(VideoItem(id: id, title: title));
+        }
+        
+        // Check if there is a next page
+        nextPageToken = data['nextPageToken'] ?? '';
+      } while (nextPageToken.isNotEmpty);
+
       setState(() {
         allVideos = loadedVideos;
         filtered = allVideos;

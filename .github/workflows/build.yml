@@ -25,6 +25,9 @@ jobs:
           channel: 'stable'
           flutter-version: '3.47.7'
 
+      - name: Create secrets file
+        run: echo "const String youtubeApiKey = '${{ secrets.YOUTUBE_API_KEY }}';" > lib/secrets.dart
+
       - name: Get packages
         run: flutter pub get
 
